@@ -1,0 +1,4 @@
+#pane{
+    -fx-background-image: url("sprite/grass.png");
+    -fx-background-repeat: repeat;
+}
