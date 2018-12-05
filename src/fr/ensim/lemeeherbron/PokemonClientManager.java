@@ -9,7 +9,6 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -19,14 +18,14 @@ public class PokemonClientManager implements Runnable {
     private BufferedInputStream reader;
     private Socket socket;
     private Group group;
-    private HashMap<String, Pokemon> displayedPokemons;
+    private PokemonOnDisplay displayedPokemons;
 
-    public PokemonClientManager(Socket socket, Group group, HashMap<String, Pokemon> displayedPokemons)
+    public PokemonClientManager(Socket socket, Group group)
     {
         this.socket = socket;
         this.group = group;
 
-        this.displayedPokemons = displayedPokemons;
+        displayedPokemons = PokemonOnDisplay.getInstance();
     }
 
     @Override
@@ -42,16 +41,23 @@ public class PokemonClientManager implements Runnable {
 
                 String[] result = response.split(Pattern.quote("$"));
 
-                for(int i = 0; i < result.length; i++)
+                String clientId = result[0];
+
+                if(!displayedPokemons.containsKey(clientId))
+                {
+                    displayedPokemons.put(clientId, new HashMap<>());
+                }
+
+                for(int i = 1; i < result.length; i++)
                 {
                     Pokemon pokemon = new Pokemon(result[i]);
 
-                    if(displayedPokemons.containsKey(pokemon.getPokemonId()))
+                    if(displayedPokemons.get(clientId).containsKey(pokemon.getPokemonId()))
                     {
                         Platform.runLater(new Runnable() {
                             @Override
                             public void run() {
-                                Pokemon pokemonResult = displayedPokemons.get(pokemon.getPokemonId());
+                                Pokemon pokemonResult = displayedPokemons.get(clientId).get(pokemon.getPokemonId());
 
                                 pokemonResult.setLayoutY(pokemon.getLayoutY());
                                 pokemonResult.setLayoutX(pokemon.getLayoutX());
@@ -63,25 +69,32 @@ public class PokemonClientManager implements Runnable {
                         Platform.runLater(new Runnable() {
                             @Override
                             public void run() {
-                                displayedPokemons.put(pokemon.getPokemonId(), pokemon);
+                                displayedPokemons.get(clientId).put(pokemon.getPokemonId(), pokemon);
                                 group.getChildren().add(pokemon);
 
-                                checkDuplicates();
+                                removeDuplicates();
                             }
                         });
                     }
                 }
 
-                Iterator iterator = displayedPokemons.entrySet().iterator();
+                /*for (Object obj : displayedPokemons.entrySet()) {
 
-                while(iterator.hasNext())
-                {
-                    Map.Entry entry = (Map.Entry) iterator.next();
-                    Pokemon pokemon = (Pokemon) entry.getValue();
+                    Map.Entry entry = (Map.Entry) obj;
 
-                    writer.write(pokemon.getTx() + "$");
-                    pokeSend++;
-                }
+                    if(!entry.getKey().equals(clientId))
+                    {
+                        for(Object objPoke : displayedPokemons.get(entry.getKey()).entrySet())
+                        {
+                            Map.Entry entryPoke = (Map.Entry) objPoke;
+
+                            Pokemon pokemon = (Pokemon) entryPoke.getValue();
+
+                            writer.write(pokemon.getTx() + "$");
+                            pokeSend++;
+                        }
+                    }
+                }*/
 
                 if(pokeSend == 0)
                 {
@@ -103,7 +116,7 @@ public class PokemonClientManager implements Runnable {
         }
     }
 
-    private void checkDuplicates()
+    private void removeDuplicates()
     {
         int i = 0;
 

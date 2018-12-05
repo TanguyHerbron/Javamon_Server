@@ -19,7 +19,7 @@ public class PokemonServer extends ServerSocket {
             public void run() {
                 while(!isClosed())
                 {
-                    HashMap<String, Pokemon> displayedPokemon = new HashMap<>();
+                    PokemonOnDisplay displayedPokemon = PokemonOnDisplay.getInstance();
 
                     try {
                         System.out.println("Waiting for connexion");
@@ -28,7 +28,7 @@ public class PokemonServer extends ServerSocket {
 
                         System.out.println("New client connected");
 
-                        Thread clientThread = new Thread(new PokemonClientManager(client, group, displayedPokemon));
+                        Thread clientThread = new Thread(new PokemonClientManager(client, group));
                         clientThread.start();
                     } catch (IOException e) {
                         e.printStackTrace();
