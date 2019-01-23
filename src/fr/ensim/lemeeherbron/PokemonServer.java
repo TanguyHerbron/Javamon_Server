@@ -20,7 +20,6 @@ public class PokemonServer extends ServerSocket {
                 while(!isClosed())
                 {
                     PokemonOnDisplay displayedPokemon = PokemonOnDisplay.getInstance();
-
                     try {
                         System.out.println("Waiting for connexion");
 
@@ -36,9 +35,6 @@ public class PokemonServer extends ServerSocket {
                 }
             }
         });
-
         serverThread.start();
     }
-
-
 }
