@@ -31,16 +31,16 @@ public class ClientHandler implements Runnable{
     public void run() {
         clientOutput.println(client.getID());
         clientOutput.flush();
-        try {
-            if(clientBuffer.ready())
-            {
-                clientMessageHandler(clientBuffer.readLine());
-
+        while(client.getSock().isConnected()){
+            try {
+                if(clientBuffer.ready())
+                {
+                    clientMessageHandler(clientBuffer.readLine());
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
-
 //        while(!isAuthenticated){
 //            verifyLog();
 //        }
@@ -63,16 +63,16 @@ public class ClientHandler implements Runnable{
         JSONArray pokemonList = jsonMessage.getJSONArray("pokemon");
         for(int i = 0; i < pokemonList.length(); i++)
         {
-        JSONObject pokemon = pokemonList.getJSONObject(i);
-        String id;
-        String name;
-        int x ,y;
-        id = pokemon.getString("id");
-        name = pokemon.getString("name");
-        x = pokemon.getInt("x");
-        y = pokemon.getInt("y");
+            JSONObject pokemon = pokemonList.getJSONObject(i);
+            int id;
+            String name;
+            int x ,y;
+            id = pokemon.getInt("id");
+            name = pokemon.getString("name");
+            x = pokemon.getInt("x");
+            y = pokemon.getInt("y");
 
-        System.out.println("Id : " + id + "\nName : " + name + "\nx : " + x +" | y : " + y + "\n");
+            System.out.println("Id : " + id + "\nName : " + name + "\nx : " + x +" | y : " + y + "\n");
         }
     }
 }
