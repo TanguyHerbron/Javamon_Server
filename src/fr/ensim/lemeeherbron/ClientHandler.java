@@ -28,9 +28,20 @@ public class ClientHandler implements Runnable{
 
     @Override
     public void run() {
-        while(!isAuthenticated){
-            verifyLog();
+        try {
+            if(clientBuffer.ready())
+            {
+                clientMessageHandler(clientBuffer.readLine());
+
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+
+
+//        while(!isAuthenticated){
+//            verifyLog();
+//        }
     }
 
     private void verifyLog() {
@@ -47,7 +58,11 @@ public class ClientHandler implements Runnable{
         JSONObject jsonMessage = new JSONObject(message);
 
         String msgType;
-
         msgType = jsonMessage.getString("type");
+
+        switch(msgType)
+        {
+            case "":
+        }
     }
 }
