@@ -2,9 +2,7 @@ package fr.ensim.lemeeherbron;
 
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.concurrent.Semaphore;
 
 public class ClientHandler implements Runnable{
@@ -13,6 +11,7 @@ public class ClientHandler implements Runnable{
     private boolean isAuthenticated = false;
     private BufferedReader clientBuffer;
     private SQLiteHandler bdd;
+    private PrintWriter clientOutput;
 
     public ClientHandler(ClientInfo client, Semaphore semEntityList, SQLiteHandler bdd){
         this.client = client;
@@ -21,6 +20,7 @@ public class ClientHandler implements Runnable{
 
         try {
             this.clientBuffer = new BufferedReader(new InputStreamReader(client.getSock().getInputStream()));
+            this.clientOutput = new PrintWriter(new OutputStreamWriter(client.getSock().getOutputStream()));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -28,6 +28,7 @@ public class ClientHandler implements Runnable{
 
     @Override
     public void run() {
+        clientOutput.println(client.getID());
         try {
             if(clientBuffer.ready())
             {
@@ -37,7 +38,6 @@ public class ClientHandler implements Runnable{
         } catch (IOException e) {
             e.printStackTrace();
         }
-
 
 //        while(!isAuthenticated){
 //            verifyLog();
@@ -57,12 +57,14 @@ public class ClientHandler implements Runnable{
     {
         JSONObject jsonMessage = new JSONObject(message);
 
-        String msgType;
-        msgType = jsonMessage.getString("type");
+        String id;
+        String name;
+        int x ,y;
+        id = jsonMessage.getString("id");
+        name = jsonMessage.getString("name");
+        x = jsonMessage.getInt("x");
+        y = jsonMessage.getInt("y");
 
-        switch(msgType)
-        {
-            case "":
-        }
+        System.out.println("Id : " + id + "\nName : " + name + "\nx : " + x +" | y : " + y);
     }
 }

@@ -6,9 +6,11 @@ public class ClientInfo {
 
     private Socket sock;
     private String name;
+    private int id;
 
-    public ClientInfo(Socket sock){
+    public ClientInfo(Socket sock, int id){
         this.sock = sock;
+        this.id = id;
     }
 
 
@@ -23,4 +25,6 @@ public class ClientInfo {
     public String getName(){return name;}
 
     public void setName(String name){this.name = name;}
+
+    public int getID() {return id;}
 }

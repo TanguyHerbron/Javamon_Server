@@ -10,6 +10,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Semaphore;
 
 public class Main{
@@ -17,6 +18,7 @@ public class Main{
     private static List<EntityJavamon> entityList;
     private static Semaphore semEntityList;
     private static SQLiteHandler bdd;
+    private static int idCounter;
 
     public static void main(String[] args) {
         entityList = new ArrayList<EntityJavamon>();
@@ -30,7 +32,8 @@ public class Main{
                 System.out.println("Waiting for clients...");
                 Socket sock = serverSocket.accept();
                 System.out.println("New client connected : " + sock.getLocalAddress().toString());
-                ClientInfo newClient = new ClientInfo(sock);
+                ClientInfo newClient = new ClientInfo(sock, idCounter);
+                idCounter++;
                 new Thread(new ClientHandler(newClient, semEntityList, bdd)).start();
             }while(true);
 
