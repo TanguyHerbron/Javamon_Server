@@ -1,23 +1,71 @@
 package fr.ensim.lemeeherbron;
 
-import javafx.geometry.Rectangle2D;
-import javafx.scene.image.ImageView;
-import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
-import javafx.scene.text.Text;
-import javafx.scene.text.TextAlignment;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.util.UUID;
-import java.util.regex.Pattern;
 
 public class Pokemon {
 
+    private int idClient;
     private int id;
     private String spritePath;
     private double x;
     private double y;
+    private char direction;
 
+    public Pokemon(int idClient, int id, String spritePath, double x, double y, char direction)
+    {
+        this.idClient = idClient;
+        this.id = id;
+        this.spritePath = spritePath;
+        this.x = x;
+        this.y = y;
+        this.direction = direction;
+    }
+
+    public int getIdClient() {
+        return idClient;
+    }
+
+    public void setIdClient(int idClient) {
+        this.idClient = idClient;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public String getSpritePath() {
+        return spritePath;
+    }
+
+    public void setSpritePath(String spritePath) {
+        this.spritePath = spritePath;
+    }
+
+    public double getX() {
+        return x;
+    }
+
+    public void setX(double x) {
+        this.x = x;
+    }
+
+    public double getY() {
+        return y;
+    }
+
+    public void setY(double y) {
+        this.y = y;
+    }
+
+    public char getDirection() {
+        return direction;
+    }
+
+    public void setDirection(char direction) {
+        this.direction = direction;
+    }
 }
