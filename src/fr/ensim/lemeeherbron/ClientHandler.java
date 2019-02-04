@@ -47,8 +47,8 @@ public class ClientHandler implements Runnable{
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            sendPokemonToClient();
         }
-        sendPokemonToClient();
 //        while(!isAuthenticated){
 //            verifyLog();
 //        }
@@ -87,9 +87,8 @@ public class ClientHandler implements Runnable{
             orientation = pokemon.get("orientation").toString().charAt(0);
 
             //verify if the pokemon allready exist
-            for (Iterator<Pokemon> pokemonIterator = newPokemonList.iterator(); pokemonIterator.hasNext();)
+            for (Pokemon pokemonIndex : clientPokemon)
             {
-                Pokemon pokemonIndex = pokemonIterator.next();
                 if(id == pokemonIndex.getId())
                 {
                     allreadyExist = true;
@@ -116,6 +115,7 @@ public class ClientHandler implements Runnable{
             listOfAllPokemon.removeAll(clientPokemon);
             listOfAllPokemon.addAll(newPokemonList);
             semEntityList.release();
+            clientPokemon = newPokemonList;
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -135,6 +135,7 @@ public class ClientHandler implements Runnable{
             pokemonListToSend.put(pokemonObject);
         }
         clientOutput.println(pokemonListToSend.toString());
+        System.out.println(pokemonListToSend.toString());
         clientOutput.flush();
     }
 }
