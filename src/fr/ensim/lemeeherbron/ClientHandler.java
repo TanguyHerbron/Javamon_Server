@@ -1,5 +1,6 @@
 package fr.ensim.lemeeherbron;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.*;
@@ -29,6 +30,7 @@ public class ClientHandler implements Runnable{
     @Override
     public void run() {
         clientOutput.println(client.getID());
+        clientOutput.flush();
         try {
             if(clientBuffer.ready())
             {
@@ -56,15 +58,21 @@ public class ClientHandler implements Runnable{
     private void clientMessageHandler(String message)
     {
         JSONObject jsonMessage = new JSONObject(message);
+        System.out.println("List of pokemon from client " + client.getID() + " :");
 
+        JSONArray pokemonList = jsonMessage.getJSONArray("pokemon");
+        for(int i = 0; i < pokemonList.length(); i++)
+        {
+        JSONObject pokemon = pokemonList.getJSONObject(i);
         String id;
         String name;
         int x ,y;
-        id = jsonMessage.getString("id");
-        name = jsonMessage.getString("name");
-        x = jsonMessage.getInt("x");
-        y = jsonMessage.getInt("y");
+        id = pokemon.getString("id");
+        name = pokemon.getString("name");
+        x = pokemon.getInt("x");
+        y = pokemon.getInt("y");
 
-        System.out.println("Id : " + id + "\nName : " + name + "\nx : " + x +" | y : " + y);
+        System.out.println("Id : " + id + "\nName : " + name + "\nx : " + x +" | y : " + y + "\n");
+        }
     }
 }
