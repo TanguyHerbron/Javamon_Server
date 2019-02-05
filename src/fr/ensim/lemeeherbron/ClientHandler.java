@@ -39,8 +39,8 @@ public class ClientHandler implements Runnable{
 
         while(!client.getSock().isClosed()){
             try {
-
                 clientMessageHandler(clientBuffer.readLine());
+                checkForBaby();
                 sendPokemonToClient();
             } catch (IOException e) {
                 try {
@@ -103,7 +103,6 @@ public class ClientHandler implements Runnable{
                     break;
                 }
             }
-
             if(!allreadyExist)
             {
                 Pokemon newPokemon = new Pokemon(client.getID(), id, name, x, y, orientation);
@@ -127,7 +126,6 @@ public class ClientHandler implements Runnable{
                     hasBeenDeleted = false;
                 }
             }
-
             if(hasBeenDeleted)
             {
                 removePokemons.add(presentPokemon);
@@ -174,6 +172,7 @@ public class ClientHandler implements Runnable{
             pokemonListToSend.put(pokemonObject);
         }
         clientOutput.println(pokemonListToSend.toString());
+        //System.out.println(pokemonListToSend.toString());
         clientOutput.flush();
     }
 
@@ -187,5 +186,27 @@ public class ClientHandler implements Runnable{
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+    
+    public synchronized void checkForBaby(){
+        Set<Pokemon> temp = new HashSet<Pokemon>();
+        Set<Pokemon> tempClientPokemon = new HashSet<Pokemon>(clientPokemon);
+        try {
+            semEntityList.acquire();
+            temp = new HashSet<Pokemon>(listOfAllPokemon);
+            semEntityList.release();
+        } catch (InterruptedException e) {}
+
+        for (Pokemon pokemon : clientPokemon)
+        {
+            for (Pokemon pokemonCmp: temp) {
+                if(pokemon.getX() == pokemonCmp.getX() && pokemon.getY() == pokemonCmp.getY() && (pokemon.getId() != pokemonCmp.getId() || pokemon.getIdClient() != pokemonCmp.getIdClient()))
+                {
+                    tempClientPokemon.add(new Pokemon(client.getID(), 0, pokemon.getSpritePath(), pokemon.getX(), pokemon.getY(), pokemon.getDirection()));
+                }
+            }
+        }
+        clientPokemon = tempClientPokemon;
+        updatePokemon(tempClientPokemon);
     }
 }
