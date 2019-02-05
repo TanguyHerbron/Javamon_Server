@@ -95,6 +95,7 @@ public class ClientHandler implements Runnable{
                 if(id == pokemonIndex.getId())
                 {
                     allreadyExist = true;
+                    pokemonIndex.setSpritePath(name);
                     pokemonIndex.setDirection(orientation);
                     pokemonIndex.setX(x);
                     pokemonIndex.setY(y);
