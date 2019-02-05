@@ -37,16 +37,18 @@ public class ClientHandler implements Runnable{
         clientOutput.println(client.getID());
         clientOutput.flush();
 
-        while(client.getSock().isConnected()){
+        while(client.getSock().isBound() && !client.getSock().isClosed()){
             try {
 
                 clientMessageHandler(clientBuffer.readLine());
+                clientBuffer.reset();
             } catch (IOException e) {
                 e.printStackTrace();
             }
 
             sendPokemonToClient();
         }
+        clientDeconected();
 //        while(!isAuthenticated){
 //            verifyLog();
 //        }
@@ -163,5 +165,17 @@ public class ClientHandler implements Runnable{
         clientOutput.println(pokemonListToSend.toString());
         System.out.println(pokemonListToSend.toString());
         clientOutput.flush();
+    }
+
+    public void clientDeconected()
+    {
+        try {
+            semEntityList.acquire();
+            listOfAllPokemon.removeAll(clientPokemon);
+            clientPokemon.clear();
+            semEntityList.release();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 }
