@@ -4,9 +4,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.*;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Semaphore;
 
 public class ClientHandler implements Runnable{
@@ -38,15 +36,15 @@ public class ClientHandler implements Runnable{
     public void run() {
         clientOutput.println(client.getID());
         clientOutput.flush();
+
         while(client.getSock().isConnected()){
             try {
-                if(clientBuffer.ready())
-                {
-                    clientMessageHandler(clientBuffer.readLine());
-                }
+
+                clientMessageHandler(clientBuffer.readLine());
             } catch (IOException e) {
                 e.printStackTrace();
             }
+
             sendPokemonToClient();
         }
 //        while(!isAuthenticated){
@@ -65,7 +63,7 @@ public class ClientHandler implements Runnable{
 
     private void clientMessageHandler(String message)
     {
-        Set<Pokemon> newPokemonList = new HashSet<Pokemon>(clientPokemon);
+        Set<Pokemon> newPokemonList = new HashSet<Pokemon>();
         JSONObject jsonMessage = new JSONObject(message);
         System.out.println("List of pokemon from client " + client.getID() + " :");
 
@@ -86,7 +84,7 @@ public class ClientHandler implements Runnable{
             y = pokemon.getDouble("y");
             orientation = pokemon.get("orientation").toString().charAt(0);
 
-            //verify if the pokemon allready exist
+            //verify if the pokemon already exists
             for (Pokemon pokemonIndex : clientPokemon)
             {
                 if(id == pokemonIndex.getId())
@@ -95,9 +93,12 @@ public class ClientHandler implements Runnable{
                     pokemonIndex.setDirection(orientation);
                     pokemonIndex.setX(x);
                     pokemonIndex.setY(y);
+
+                    newPokemonList.add(pokemonIndex);
                     break;
                 }
             }
+
             if(!allreadyExist)
             {
                 Pokemon newPokemon = new Pokemon(client.getID(), id, name, x, y, orientation);
@@ -105,6 +106,31 @@ public class ClientHandler implements Runnable{
             }
             System.out.println("Id : " + id + "\nName : " + name + "\nx : " + x +" | y : " + y + "\n");
         }
+
+        Iterator iterator = clientPokemon.iterator();
+        List<Pokemon> removePokemons = new ArrayList<>();
+        while(iterator.hasNext())
+        {
+            boolean hasBeenDeleted = true;
+
+            Pokemon presentPokemon = (Pokemon) iterator.next();
+
+            for(Pokemon pokemon : newPokemonList)
+            {
+                if(pokemon.getId() == presentPokemon.getId())
+                {
+                    hasBeenDeleted = false;
+                }
+            }
+
+            if(hasBeenDeleted)
+            {
+                removePokemons.add(presentPokemon);
+            }
+        }
+
+        newPokemonList.removeAll(removePokemons);
+
         updatePokemon(newPokemonList);
     }
 
