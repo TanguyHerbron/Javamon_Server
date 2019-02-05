@@ -37,18 +37,21 @@ public class ClientHandler implements Runnable{
         clientOutput.println(client.getID());
         clientOutput.flush();
 
-        while(client.getSock().isBound() && !client.getSock().isClosed()){
+        while(!client.getSock().isClosed()){
             try {
 
                 clientMessageHandler(clientBuffer.readLine());
-                clientBuffer.reset();
+                sendPokemonToClient();
             } catch (IOException e) {
-                e.printStackTrace();
+                try {
+                    client.getSock().close();
+                    clientDeconected();
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+                //e.printStackTrace();
             }
-
-            sendPokemonToClient();
         }
-        clientDeconected();
 //        while(!isAuthenticated){
 //            verifyLog();
 //        }
@@ -67,7 +70,7 @@ public class ClientHandler implements Runnable{
     {
         Set<Pokemon> newPokemonList = new HashSet<Pokemon>();
         JSONObject jsonMessage = new JSONObject(message);
-        System.out.println("List of pokemon from client " + client.getID() + " :");
+        //System.out.println("List of pokemon from client " + client.getID() + " :");
 
         JSONArray pokemonList = jsonMessage.getJSONArray("pokemon");
 
@@ -106,7 +109,7 @@ public class ClientHandler implements Runnable{
                 Pokemon newPokemon = new Pokemon(client.getID(), id, name, x, y, orientation);
                 newPokemonList.add(newPokemon);
             }
-            System.out.println("Id : " + id + "\nName : " + name + "\nx : " + x +" | y : " + y + "\n");
+            //System.out.println("Id : " + id + "\nName : " + name + "\nx : " + x +" | y : " + y + "\n");
         }
 
         Iterator iterator = clientPokemon.iterator();
@@ -149,9 +152,17 @@ public class ClientHandler implements Runnable{
         }
     }
 
-    private void sendPokemonToClient(){
+    private synchronized void sendPokemonToClient(){
         JSONArray pokemonListToSend = new JSONArray();
-        for(Pokemon pokemon : listOfAllPokemon)
+        Set<Pokemon> temp= new HashSet<Pokemon>();
+        try {
+            semEntityList.acquire();
+            temp = new HashSet<Pokemon>(listOfAllPokemon);
+            semEntityList.release();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        for(Pokemon pokemon : temp)
         {
             JSONObject pokemonObject = new JSONObject();
             pokemonObject.put("id", pokemon.getId());
@@ -163,7 +174,6 @@ public class ClientHandler implements Runnable{
             pokemonListToSend.put(pokemonObject);
         }
         clientOutput.println(pokemonListToSend.toString());
-        System.out.println(pokemonListToSend.toString());
         clientOutput.flush();
     }
 
