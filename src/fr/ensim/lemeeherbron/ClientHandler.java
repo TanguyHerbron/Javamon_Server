@@ -79,15 +79,17 @@ public class ClientHandler implements Runnable{
         {
             boolean allreadyExist = false;
             JSONObject pokemon = pokemonList.getJSONObject(i);
-            int id;
+            int id, sexe;
             String name;
-            double x ,y;
+            double x ,y, speed;
             char orientation;
             id = pokemon.getInt("id");
             name = pokemon.getString("name");
             x = pokemon.getDouble("x");
             y = pokemon.getDouble("y");
             orientation = pokemon.get("orientation").toString().charAt(0);
+            speed = pokemon.getDouble("speed");
+            sexe = pokemon.getInt("sexe");
 
             //verify if the pokemon already exists
             for (Pokemon pokemonIndex : clientPokemon)
@@ -106,10 +108,9 @@ public class ClientHandler implements Runnable{
             }
             if(!allreadyExist)
             {
-                Pokemon newPokemon = new Pokemon(client.getID(), id, name, x, y, orientation);
+                Pokemon newPokemon = new Pokemon(client.getID(), id, name, x, y, orientation, speed, sexe);
                 newPokemonList.add(newPokemon);
             }
-            //System.out.println("Id : " + id + "\nName : " + name + "\nx : " + x +" | y : " + y + "\n");
         }
 
         Iterator iterator = clientPokemon.iterator();
@@ -153,7 +154,7 @@ public class ClientHandler implements Runnable{
 
     private synchronized void sendPokemonToClient(){
         JSONArray pokemonListToSend = new JSONArray();
-        Set<Pokemon> temp= new HashSet<Pokemon>();
+        Set<Pokemon> temp = null;
         try {
             semEntityList.acquire();
             temp = new HashSet<Pokemon>(listOfAllPokemon);
@@ -161,6 +162,7 @@ public class ClientHandler implements Runnable{
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+
         for(Pokemon pokemon : temp)
         {
             JSONObject pokemonObject = new JSONObject();
@@ -169,12 +171,31 @@ public class ClientHandler implements Runnable{
             pokemonObject.put("x", pokemon.getX());
             pokemonObject.put("y", pokemon.getY());
             pokemonObject.put("orientation", pokemon.getDirection());
+            pokemonObject.put("speed", pokemon.getSpeed());
+            pokemonObject.put("sexe", pokemon.getSexe());
 
             pokemonListToSend.put(pokemonObject);
         }
         clientOutput.println(pokemonListToSend.toString());
         //System.out.println(pokemonListToSend.toString());
         clientOutput.flush();
+
+        cleanNewPokemons(temp);
+    }
+
+    private void cleanNewPokemons(Set<Pokemon> pokemonSet)
+    {
+        for(Pokemon pokemon : pokemonSet)
+        {
+            if(pokemon.getId() == 0)
+            {
+                try {
+                    semEntityList.acquire();
+                    listOfAllPokemon.remove(pokemon);
+                    semEntityList.release();
+                } catch (InterruptedException e) {}
+            }
+        }
     }
 
     public void clientDeconected()
@@ -201,12 +222,27 @@ public class ClientHandler implements Runnable{
         for (Pokemon pokemon : clientPokemon)
         {
             for (Pokemon pokemonCmp: temp) {
-                if(pokemon.getX() == pokemonCmp.getX() && pokemon.getY() == pokemonCmp.getY() && (pokemon.getId() != pokemonCmp.getId() || pokemon.getIdClient() != pokemonCmp.getIdClient()))
+                if(pokemon.getX() == pokemonCmp.getX()
+                        && pokemon.getY() == pokemonCmp.getY()
+                        && pokemon.getSpritePath().equals(pokemonCmp.getSpritePath())
+                        && (pokemon.getId() != pokemonCmp.getId() || pokemon.getIdClient() != pokemonCmp.getIdClient())
+                        && System.currentTimeMillis() - pokemon.getLastFuck() >= 30000
+                        && System.currentTimeMillis() - pokemonCmp.getLastFuck() >= 30000
+                        && pokemon.getSexe() + pokemonCmp.getSexe() == 1)
                 {
-                    tempClientPokemon.add(new Pokemon(client.getID(), 0, pokemon.getSpritePath(), pokemon.getX(), pokemon.getY(), pokemon.getDirection()));
+                    tempClientPokemon.add(new Pokemon(client.getID()
+                            , 0
+                            , pokemon.getSpritePath()
+                            , pokemon.getX()
+                            , pokemon.getY()
+                            , pokemon.getDirection()
+                            , pokemon.getSpeed()
+                            , pokemon.getSexe()));
+                    pokemon.fucked();
                 }
             }
         }
+
         clientPokemon = tempClientPokemon;
         updatePokemon(tempClientPokemon);
     }
