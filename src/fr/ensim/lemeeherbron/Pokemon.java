@@ -10,8 +10,11 @@ public class Pokemon {
     private double x;
     private double y;
     private char direction;
+    private long lastFuck;
+    private double speed;
+    private int sexe;
 
-    public Pokemon(int idClient, int id, String spritePath, double x, double y, char direction)
+    public Pokemon(int idClient, int id, String spritePath, double x, double y, char direction, double speed, int sexe)
     {
         this.idClient = idClient;
         this.id = id;
@@ -19,6 +22,9 @@ public class Pokemon {
         this.x = x;
         this.y = y;
         this.direction = direction;
+        this.speed = speed;
+        this.sexe = sexe;
+        lastFuck = System.currentTimeMillis();
     }
 
     public int getIdClient() {
@@ -67,5 +73,25 @@ public class Pokemon {
 
     public void setDirection(char direction) {
         this.direction = direction;
+    }
+
+    public void fucked()
+    {
+        lastFuck = System.currentTimeMillis();
+    }
+
+    public long getLastFuck()
+    {
+        return lastFuck;
+    }
+
+    public double getSpeed()
+    {
+        return speed;
+    }
+
+    public int getSexe()
+    {
+        return sexe;
     }
 }
