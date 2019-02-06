@@ -17,9 +17,11 @@ public class Main{
     private static SQLiteHandler bdd;
     private static int idCounter;
     private static Set<Pokemon> listOfAllPokemon;
+    private static Set<Entity> listOfAllPlayers;
 
     public static void main(String[] args) {
         listOfAllPokemon = new HashSet<Pokemon>();
+        listOfAllPlayers = new HashSet<>();
         semEntityList = new Semaphore(1, true);
         bdd = new SQLiteHandler("javamon.db");
 
@@ -32,7 +34,7 @@ public class Main{
                 System.out.println("New client connected : " + sock.getLocalAddress().toString());
                 ClientInfo newClient = new ClientInfo(sock, idCounter);
                 idCounter++;
-                new Thread(new ClientHandler(newClient, listOfAllPokemon, semEntityList, bdd)).start();
+                new Thread(new ClientHandler(newClient, listOfAllPokemon, listOfAllPlayers, semEntityList, bdd)).start();
             }while(true);
 
         } catch (IOException e) {

@@ -8,6 +8,7 @@ import java.util.*;
 import java.util.concurrent.Semaphore;
 
 public class ClientHandler implements Runnable{
+
     private ClientInfo client;
     private Semaphore semEntityList;
     private boolean isAuthenticated = false;
@@ -17,11 +18,15 @@ public class ClientHandler implements Runnable{
     private Set<Pokemon> listOfAllPokemon;
     private Set<Pokemon> clientPokemon;
 
-    public ClientHandler(ClientInfo client,Set<Pokemon> listOfAllPokemon, Semaphore semEntityList, SQLiteHandler bdd){
+    private Set<Entity> listOfAllPlayers;
+    private Entity currentPlayer;
+
+    public ClientHandler(ClientInfo client,Set<Pokemon> listOfAllPokemon, Set<Entity> listOfAllPlayers, Semaphore semEntityList, SQLiteHandler bdd){
         this.client = client;
         this.semEntityList = semEntityList;
         this.bdd = bdd;
         this.listOfAllPokemon = listOfAllPokemon;
+        this.listOfAllPlayers = listOfAllPlayers;
         clientPokemon = new HashSet<Pokemon>();
 
         try {
@@ -41,11 +46,11 @@ public class ClientHandler implements Runnable{
             try {
                 clientMessageHandler(clientBuffer.readLine());
                 checkForBaby();
-                sendPokemonToClient();
+                sendDataToClient();
             } catch (IOException e) {
                 try {
                     client.getSock().close();
-                    clientDeconected();
+                    clientDisconnected();
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 }
@@ -71,6 +76,15 @@ public class ClientHandler implements Runnable{
         Set<Pokemon> newPokemonList = new HashSet<Pokemon>();
         JSONObject jsonMessage = new JSONObject(message);
         //System.out.println("List of pokemon from client " + client.getID() + " :");
+
+        JSONObject playerObject = jsonMessage.getJSONObject("player");
+
+        Entity newPlayer = new Entity(playerObject.getString("sprite"),
+                playerObject.getDouble("x"),
+                playerObject.getDouble("y"),
+                playerObject.get("orientation").toString().charAt(0),
+                playerObject.getString("map"),
+                playerObject.getBoolean("walking"));
 
         JSONArray pokemonList = jsonMessage.getJSONArray("pokemon");
 
@@ -136,15 +150,34 @@ public class ClientHandler implements Runnable{
 
         newPokemonList.removeAll(removePokemons);
 
-        updatePokemon(newPokemonList);
+        updateEntities(newPokemonList, newPlayer);
     }
 
-    private void updatePokemon(Set<Pokemon> newPokemonList)
+    private void updateEntities(Set<Pokemon> newPokemonList, Entity newPlayer)
     {
         try {
             semEntityList.acquire();
+
+            if(currentPlayer != null) listOfAllPlayers.remove(currentPlayer);
+            listOfAllPlayers.add(newPlayer);
+
+            semEntityList.release();
+            currentPlayer = newPlayer;
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        updateEntities(newPokemonList);
+    }
+
+    private void updateEntities(Set<Pokemon> newPokemonList)
+    {
+        try {
+            semEntityList.acquire();
+
             listOfAllPokemon.removeAll(clientPokemon);
             listOfAllPokemon.addAll(newPokemonList);
+
             semEntityList.release();
             clientPokemon = newPokemonList;
         } catch (InterruptedException e) {
@@ -152,18 +185,25 @@ public class ClientHandler implements Runnable{
         }
     }
 
-    private synchronized void sendPokemonToClient(){
+    private synchronized void sendDataToClient(){
+        JSONObject mainObject = new JSONObject();
+
         JSONArray pokemonListToSend = new JSONArray();
-        Set<Pokemon> temp = null;
+        JSONArray entityListToSend = new JSONArray();
+
+        Set<Pokemon> tempPokemon = null;
+        Set<Entity> tempEntity = null;
+
         try {
             semEntityList.acquire();
-            temp = new HashSet<Pokemon>(listOfAllPokemon);
+            tempPokemon = new HashSet<Pokemon>(listOfAllPokemon);
+            tempEntity = new HashSet<>(listOfAllPlayers);
             semEntityList.release();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
-        for(Pokemon pokemon : temp)
+        for(Pokemon pokemon : tempPokemon)
         {
             JSONObject pokemonObject = new JSONObject();
             pokemonObject.put("id", pokemon.getId());
@@ -176,11 +216,31 @@ public class ClientHandler implements Runnable{
 
             pokemonListToSend.put(pokemonObject);
         }
-        clientOutput.println(pokemonListToSend.toString());
+
+        for(Entity entity : tempEntity)
+        {
+            if(entity.getMapValue().equals(currentPlayer.getMapValue()))
+            {
+                JSONObject entityObject = new JSONObject();
+
+                entityObject.put("sprite", entity.getSprite());
+                entityObject.put("x", entity.getX());
+                entityObject.put("y", entity.getY());
+                entityObject.put("orientation", entity.getOrientation());
+                entityObject.put("walking", entity.isWalking());
+
+                entityListToSend.put(entityObject);
+            }
+        }
+
+        mainObject.put("entities", entityListToSend);
+        mainObject.put("pokemon", pokemonListToSend);
+
+        clientOutput.println(mainObject.toString());
         //System.out.println(pokemonListToSend.toString());
         clientOutput.flush();
 
-        cleanNewPokemons(temp);
+        cleanNewPokemons(tempPokemon);
     }
 
     private void cleanNewPokemons(Set<Pokemon> pokemonSet)
@@ -198,12 +258,14 @@ public class ClientHandler implements Runnable{
         }
     }
 
-    public void clientDeconected()
+    public void clientDisconnected()
     {
         try {
             semEntityList.acquire();
             listOfAllPokemon.removeAll(clientPokemon);
+            listOfAllPlayers.remove(currentPlayer);
             clientPokemon.clear();
+            currentPlayer = null;
             semEntityList.release();
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -244,6 +306,7 @@ public class ClientHandler implements Runnable{
         }
 
         clientPokemon = tempClientPokemon;
-        updatePokemon(tempClientPokemon);
+
+        updateEntities(tempClientPokemon);
     }
 }
