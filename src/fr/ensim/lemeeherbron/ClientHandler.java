@@ -283,7 +283,7 @@ public class ClientHandler implements Runnable{
 
         for (Pokemon pokemon : clientPokemon)
         {
-            for (Pokemon pokemonCmp: temp) {
+            for (Pokemon pokemonCmp : temp) {
                 if(pokemon.getX() == pokemonCmp.getX()
                         && pokemon.getY() == pokemonCmp.getY()
                         && pokemon.getSpritePath().equals(pokemonCmp.getSpritePath())
@@ -292,15 +292,81 @@ public class ClientHandler implements Runnable{
                         && System.currentTimeMillis() - pokemonCmp.getLastFuck() >= 30000
                         && pokemon.getSexe() + pokemonCmp.getSexe() == 1)
                 {
-                    tempClientPokemon.add(new Pokemon(client.getID()
-                            , 0
-                            , pokemon.getSpritePath()
-                            , pokemon.getX()
-                            , pokemon.getY()
-                            , pokemon.getDirection()
-                            , pokemon.getSpeed()
-                            , pokemon.getSexe()));
-                    pokemon.fucked();
+                    int nbBaby;
+
+                    switch (pokemon.getSpritePath())
+                    {
+                        case "pokemon/chetiflor":
+                            nbBaby = new Random().nextInt(9);
+                            break;
+                        case "pokemon/boustiflor":
+                            nbBaby = new Random().nextInt(9);
+                            break;
+                        case "pokemon/empiflor":
+                            nbBaby = new Random().nextInt(9);
+                            break;
+                        case "pokemon/bulbizarre":
+                            nbBaby = new Random().nextInt(1);
+                            break;
+                        case "pokemon/herbizarre":
+                            nbBaby = new Random().nextInt(1);
+                            break;
+                        case "pokemon/florizarre":
+                            nbBaby = new Random().nextInt(1);
+                            break;
+                        case "pokemon/magicarpe":
+                            nbBaby = new Random().nextInt(7);
+                            break;
+                        case "pokemon/leviator":
+                            nbBaby = new Random().nextInt(2);
+                            break;
+                        case "pokemon/mystherbe":
+                            nbBaby = new Random().nextInt(5);
+                            break;
+                        case "pokemon/ortide":
+                            nbBaby = new Random().nextInt(3);
+                            break;
+                        case "pokemon/rafflesia":
+                            nbBaby = new Random().nextInt(1);
+                            break;
+                        case "pokemon/pikachu":
+                            nbBaby = new Random().nextInt(7);
+                            break;
+                        case "pokemon/ptera":
+                            nbBaby = new Random().nextInt(2);
+                            break;
+                        default:
+                            nbBaby = new Random().nextInt(1);
+                    }
+
+                    for(int i = 0; i < nbBaby; i++)
+                    {
+                        if(new Random().nextBoolean())
+                        {
+                            tempClientPokemon.add(new Pokemon(pokemon.getIdClient()
+                                    , 0
+                                    , pokemon.getSpritePath()
+                                    , pokemon.getX()
+                                    , pokemon.getY()
+                                    , pokemon.getDirection()
+                                    , pokemon.getSpeed()
+                                    , pokemon.getSexe()));
+                        }
+                        else
+                        {
+                            tempClientPokemon.add(new Pokemon(pokemonCmp.getIdClient()
+                                    , 0
+                                    , pokemon.getSpritePath()
+                                    , pokemon.getX()
+                                    , pokemon.getY()
+                                    , pokemon.getDirection()
+                                    , pokemon.getSpeed()
+                                    , pokemon.getSexe()));
+                        }
+
+                        pokemonCmp.fucked();
+                        pokemon.fucked();
+                    }
                 }
             }
         }
